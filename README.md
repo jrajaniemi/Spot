@@ -3,6 +3,7 @@
 
 ## Overview
 `spot.py` is a Python script that fetches electricity prices from the ENTSO-E (European Network of Transmission System Operators for Electricity) API and saves the response in a JSON file.
+* [ENTSO RESTful API - user guide](https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html)
 
 ## Functionality
 1. Imports necessary libraries such as `requests`, `xmltodict`, `json`, `os`, and `dotenv`.
