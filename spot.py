@@ -3,7 +3,8 @@ import xmltodict
 import json
 import os
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -30,11 +31,26 @@ def fetch_electricity_prices(start, end, area):
         if response.status_code == 200:
             # Convert XML response to JSON
             response_json = json.dumps(xmltodict.parse(response.text))
-            # Save the JSON response to a file with a timestamp
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            
+            # Load the JSON response as a dictionary
+            response_dict = json.loads(response_json)
+            
+            # Extract the TimeSeries array and its Period object
+            time_series = response_dict['Publication_MarketDocument']['TimeSeries']
+            for series in time_series:
+                series.pop('mRID', None)
+                series.pop('businessType', None)
+                series.pop('in_Domain.mRID', None)
+                series.pop('out_Domain.mRID', None)
+                series.pop('currency_Unit.name', None)
+                series.pop('price_Measure_Unit.name', None)
+                series.pop('curveType', None)
+            
+            # Save the filtered JSON response to a file with a timestamp
+            timestamp = datetime.now().strftime("%Y%m%d%H%M")
             with open(f'response_{timestamp}.json', 'w') as f:
-                f.write(response_json)
-            return response_json
+                f.write(json.dumps(time_series, separators=(',', ':')))
+            return json.dumps(time_series, separators=(',', ':'))
         else:
             print("Error:", response.status_code, response.text)
             return None
@@ -42,10 +58,30 @@ def fetch_electricity_prices(start, end, area):
         print("Network error:", e)
         return None
 
+# Get the current date and time
+now = datetime.now()
+
+# Calculate the date of the day before the current date
+end_date = now - timedelta(days=1)
+
+# Set the time to the start of the day
+end_date = end_date.replace(hour=0, minute=0, second=0)
+
+# Format the end date and time as a string
+end = end_date.strftime("%Y%m%d%H%M")
+
+# Calculate the start date as 365 days before the end date
+start_date = end_date - timedelta(days=365)
+
+# Format the start date and time as a string
+start = start_date.strftime("%Y%m%d%H%M")
+
 # Example usage:
-start = '202308010000'
-end = '202308080000'
 area = '10YFI-1--------U'  # This is the EIC code for Finland
 
+# Example usage:
+area = '10YFI-1--------U'  # This is the EIC code for Finland
+
+
 prices = fetch_electricity_prices(start, end, area)
-print(prices)
+# print(prices)
